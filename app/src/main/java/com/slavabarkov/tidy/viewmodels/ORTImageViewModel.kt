@@ -16,6 +16,7 @@ import android.provider.MediaStore
 import androidx.lifecycle.*
 import com.slavabarkov.tidy.R
 import com.slavabarkov.tidy.centerCrop
+import com.slavabarkov.tidy.resizeAndPad
 import com.slavabarkov.tidy.data.ImageEmbedding
 import com.slavabarkov.tidy.data.ImageEmbeddingDatabase
 import com.slavabarkov.tidy.data.ImageEmbeddingRepository
@@ -81,8 +82,8 @@ class ORTImageViewModel(application: Application) : AndroidViewModel(application
                         val bitmap: Bitmap? =
                             BitmapFactory.decodeByteArray(bytes, 0, bytes?.size ?: 0)
                         bitmap?.let {
-                            val rawBitmap = centerCrop(bitmap, 224)
-                            val inputShape = longArrayOf(1, 3, 224, 224)
+                            val rawBitmap = resizeAndPad(bitmap, 256)
+                            val inputShape = longArrayOf(1, 3, 256, 256)
                             val inputName = "pixel_values"
                             val imgData = preProcess(rawBitmap)
                             val inputTensor = OnnxTensor.createTensor(ortEnv, imgData, inputShape)

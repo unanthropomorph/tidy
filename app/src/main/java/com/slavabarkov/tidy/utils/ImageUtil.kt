@@ -13,8 +13,8 @@ import java.nio.FloatBuffer
 
 const val DIM_BATCH_SIZE = 1
 const val DIM_PIXEL_SIZE = 3
-const val IMAGE_SIZE_X = 224
-const val IMAGE_SIZE_Y = 224
+const val IMAGE_SIZE_X = 256
+const val IMAGE_SIZE_Y = 256
 
 fun preProcess(bitmap: Bitmap): FloatBuffer {
     val imgData = FloatBuffer.allocate(
@@ -28,12 +28,12 @@ fun preProcess(bitmap: Bitmap): FloatBuffer {
         for (j in 0 until IMAGE_SIZE_Y) {
             val idx = IMAGE_SIZE_Y * i + j
             val pixelValue = bmpData[idx]
-            imgData.put(idx, (((pixelValue shr 16 and 0xFF) / 255f - 0.48145467f) / 0.26862955f))
+            imgData.put(idx, (((pixelValue shr 16 and 0xFF) / 255f - 0.0f) / 1.0f))
             imgData.put(
-                idx + stride, (((pixelValue shr 8 and 0xFF) / 255f - 0.4578275f) / 0.2613026f)
+                idx + stride, (((pixelValue shr 8 and 0xFF) / 255f - 0.0f) / 1.0f)
             )
             imgData.put(
-                idx + stride * 2, (((pixelValue and 0xFF) / 255f - 0.40821072f) / 0.2757771f)
+                idx + stride * 2, (((pixelValue and 0xFF) / 255f - 0.0f) / 1.0f)
             )
         }
     }
@@ -62,4 +62,39 @@ fun centerCrop(bitmap: Bitmap, imageSize: Int): Bitmap {
         bitmapCropped, imageSize, imageSize, false
     )
     return bitmapCropped
+}
+
+fun resizeAndPad(bitmap: Bitmap, targetSize: Int = 256): Bitmap {
+    // Create a new bitmap with the target size and a black background
+    val paddedBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(paddedBitmap)
+    canvas.drawColor(Color.BLACK) // Fill the background with black
+
+    // Calculate padding for centering
+    val scale: Float
+    val xOffset: Int
+    val yOffset: Int
+
+    if (bitmap.width > bitmap.height) {
+        scale = targetSize.toFloat() / bitmap.width
+        val newHeight = (bitmap.height * scale).toInt()
+        yOffset = (targetSize - newHeight) / 2
+        xOffset = 0
+    } else {
+        scale = targetSize.toFloat() / bitmap.height
+        val newWidth = (bitmap.width * scale).toInt()
+        xOffset = (targetSize - newWidth) / 2
+        yOffset = 0
+    }
+
+    // Create a scaled version of the original bitmap
+    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 
+        (bitmap.width * scale).toInt(), 
+        (bitmap.height * scale).toInt(), 
+        false)
+
+    // Draw the scaled bitmap onto the padded canvas
+    canvas.drawBitmap(scaledBitmap, xOffset.toFloat(), yOffset.toFloat(), null)
+
+    return paddedBitmap
 }
